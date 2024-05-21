@@ -2,10 +2,8 @@ package com.petstagram.service;
 
 import com.petstagram.dto.UserDTO;
 import com.petstagram.dto.UserProfileDTO;
-import com.petstagram.entity.FollowEntity;
 import com.petstagram.entity.ProfileImageEntity;
 import com.petstagram.entity.UserEntity;
-import com.petstagram.repository.FollowRepository;
 import com.petstagram.repository.UserRepository;
 import com.petstagram.service.utils.JWTUtils;
 import lombok.RequiredArgsConstructor;
@@ -177,6 +175,7 @@ public class UserService {
         return userDTO;
     }
 
+
     // 팔로우 관련 새로운 메소드 추가
     public UserEntity getUserByEmail(String email) {
         return userRepository.findByEmail(email)
@@ -190,14 +189,14 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("USER_NOT_FOUND: 사용자를 찾을 수 없습니다. ID: " + userId));
     }
 
-    // 팔로워 갯수 증가 메소드 추가
+    // 팔로워 메소드 추가
     public int getFollowersCount(Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
         return followService.countFollowers(user);
     }
 
-    // 팔로잉 갯수 증가 메소드 추가
+    // 팔로잉 메소드 추가
     public int getFollowingsCount(Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));

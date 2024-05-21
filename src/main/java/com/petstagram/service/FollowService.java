@@ -1,5 +1,6 @@
 package com.petstagram.service;
 
+import com.petstagram.dto.UserDTO;
 import com.petstagram.entity.FollowEntity;
 import com.petstagram.entity.UserEntity;
 import com.petstagram.repository.FollowRepository;
@@ -7,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -50,12 +52,18 @@ public class FollowService {
         return "SUCCESS";
     }
 
-    public List<UserEntity> getFollowingList(UserEntity user) {
-        return followRepository.findFollowingsByUser(user);
+    public List<UserDTO> getFollowingList(UserEntity user) {
+        List<UserEntity> followings = followRepository.findFollowingsByUser(user);
+        return followings.stream()
+                .map(UserDTO::toDTO)
+                .collect(Collectors.toList());
     }
 
-    public List<UserEntity> getFollowerList(UserEntity user) {
-        return followRepository.findFollowersByUser(user);
+    public List<UserDTO> getFollowerList(UserEntity user) {
+        List<UserEntity> followers = followRepository.findFollowersByUser(user);
+        return followers.stream()
+                .map(UserDTO::toDTO)
+                .collect(Collectors.toList());
     }
 
     public boolean isFollowing(UserEntity fromUser, UserEntity toUser) {

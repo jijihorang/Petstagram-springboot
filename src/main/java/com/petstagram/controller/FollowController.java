@@ -1,5 +1,6 @@
 package com.petstagram.controller;
 
+import com.petstagram.dto.UserDTO;
 import com.petstagram.entity.UserEntity;
 import com.petstagram.service.FollowService;
 import com.petstagram.service.UserService;
@@ -50,13 +51,13 @@ public class FollowController {
     }
 
     @GetMapping("/following")
-    public ResponseEntity<List<UserEntity>> getFollowings() {
+    public ResponseEntity<List<UserDTO>> getFollowings() {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String userEmail = authentication.getName();
             UserEntity user = userService.getUserByEmail(userEmail);
 
-            List<UserEntity> followingList = followService.getFollowingList(user);
+            List<UserDTO> followingList = followService.getFollowingList(user);
             return ResponseEntity.ok(followingList);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(null);
@@ -64,13 +65,13 @@ public class FollowController {
     }
 
     @GetMapping("/followers")
-    public ResponseEntity<List<UserEntity>> getFollowers() {
+    public ResponseEntity<List<UserDTO>> getFollowers() {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String userEmail = authentication.getName();
             UserEntity user = userService.getUserByEmail(userEmail);
 
-            List<UserEntity> followerList = followService.getFollowerList(user);
+            List<UserDTO> followerList = followService.getFollowerList(user);
             return ResponseEntity.ok(followerList);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(null);

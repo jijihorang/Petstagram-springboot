@@ -31,8 +31,6 @@ public class UserDTO {
     private ProfileImageDTO profileImage;
 
     private UserEntity userEntity;
-    private List<UserEntity> userEntityList;
-
 
     // Entity -> DTO
     public static UserDTO toDTO(UserEntity userEntity) {
