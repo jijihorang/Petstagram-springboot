@@ -50,6 +50,7 @@ public class FollowController {
         }
     }
 
+    // 팔로잉 리스트
     @GetMapping("/following")
     public ResponseEntity<List<UserDTO>> getFollowings() {
         try {
@@ -64,6 +65,7 @@ public class FollowController {
         }
     }
 
+    // 팔로워 리스트
     @GetMapping("/followers")
     public ResponseEntity<List<UserDTO>> getFollowers() {
         try {
