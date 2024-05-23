@@ -106,7 +106,7 @@ public class PostService {
     }
 
     // 게시글 수정
-    public PostDTO updatePost(Long postId, PostDTO postDTO) {
+    public PostDTO updatePost(Long postId, PostDTO postDTO, MultipartFile file) {
         // 게시글 ID로 게시물 찾기
         PostEntity postEntity = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 게시물을 찾을 수 없습니다. ID: " + postId));
@@ -119,6 +119,26 @@ public class PostService {
 
         // 찾은 게시글의 내용을 업데이트
         postEntity.setPostContent(postDTO.getPostContent());
+
+        // 이미지 업로드 처리
+        if (file != null && !file.isEmpty()) {
+            String fileName = fileUploadService.storeFile(file);
+
+            // 이미지 엔터티 수정
+            if (!postEntity.getImageList().isEmpty()) {
+                // 기존 이미지가 있을 경우 첫 번째 이미지만 업데이트
+                ImageEntity existingImage = postEntity.getImageList().get(0);
+                existingImage.setImageName(file.getOriginalFilename()); // 이미지 이름 업데이트
+                existingImage.setImageUrl(fileName); // 이미지 URL 업데이트
+            } else {
+                // 새로운 이미지 추가
+                ImageEntity imageEntity = new ImageEntity();
+                imageEntity.setImageName(file.getOriginalFilename());
+                imageEntity.setImageUrl(fileName);
+                imageEntity.setPost(postEntity);
+                postEntity.getImageList().add(imageEntity);
+            }
+        }
 
         postRepository.save(postEntity);
 

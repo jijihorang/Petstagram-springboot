@@ -6,6 +6,7 @@ import com.petstagram.service.PostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -54,9 +55,19 @@ public class PostController {
     }
 
     // 게시글 수정
-    @PutMapping("/update/{postId}")
-    public ResponseEntity<PostDTO> updatePost(@PathVariable Long postId, @RequestBody PostDTO postDTO) {
-        return ResponseEntity.ok(postService.updatePost(postId, postDTO));
+    @PutMapping(value = "/update/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<PostDTO> updatePost(
+            @PathVariable Long postId,
+            @RequestPart("post") PostDTO postDTO,
+            @RequestPart(value = "file", required = false) MultipartFile file
+    ) {
+        try {
+            PostDTO updatedPostDTO = postService.updatePost(postId, postDTO, file);
+            return ResponseEntity.ok(updatedPostDTO);
+        } catch (Exception e) {
+            log.error("게시글 수정 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
     // 게시글 삭제
