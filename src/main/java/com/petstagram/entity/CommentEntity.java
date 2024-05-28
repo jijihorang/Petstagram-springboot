@@ -1,15 +1,15 @@
-
 package com.petstagram.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.petstagram.dto.CommentDTO;
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 
-// 댓글
 @Entity
 @Getter
 @Setter
@@ -44,6 +44,11 @@ public class CommentEntity extends BaseEntity {
     @JsonIgnore
     private Set<CommentLikeEntity> commentLikeList = new HashSet<>();
 
+    // 대댓글과의 관계 설정
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ReplyCommentEntity> replyCommentList = new ArrayList<>();
+
     // DTO -> Entity
     public static CommentEntity toEntity(CommentDTO dto) {
         return CommentEntity.builder()
@@ -56,5 +61,11 @@ public class CommentEntity extends BaseEntity {
     public void addCommentLike(CommentLikeEntity commentLikeEntity) {
         this.commentLikeList.add(commentLikeEntity);
         commentLikeEntity.setComment(this); // 댓글에 좋아요 설정
+    }
+
+    // 대댓글을 추가하는 메서드
+    public void addReplyComment(ReplyCommentEntity replyCommentEntity) {
+        this.replyCommentList.add(replyCommentEntity);
+        replyCommentEntity.setComment(this);
     }
 }

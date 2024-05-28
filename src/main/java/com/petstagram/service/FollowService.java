@@ -15,8 +15,9 @@ import java.util.stream.Collectors;
 public class FollowService {
 
     private final FollowRepository followRepository;
+    private final NotificationService notificationService;
 
-    public String follow(UserEntity fromUser, UserEntity toUser) throws Exception {
+    public void follow(UserEntity fromUser, UserEntity toUser) throws Exception {
         // 본인 follow x
         if (fromUser.equals(toUser)) {
             throw new Exception("INVALID_REQUEST: 본인 follow 할 수 없습니다");
@@ -29,8 +30,10 @@ public class FollowService {
                 throw new Exception("FOLLOW_DUPLICATED: 이미 follow 했습니다");
             } else {
                 follow.setStatus(true);
+                notificationService.sendNotification(toUser.getId(), "following", fromUser.getId(), null, null);
                 followRepository.save(follow);
-                return "SUCCESS";
+
+                return;
             }
         }
 
@@ -41,15 +44,14 @@ public class FollowService {
                 .build();
 
         followRepository.save(follow);
-        return "SUCCESS";
+        notificationService.sendNotification(toUser.getId(), "following", fromUser.getId(), null, null);
     }
 
-    public String unfollow(UserEntity fromUser, UserEntity toUser) throws Exception {
+    public void unfollow(UserEntity fromUser, UserEntity toUser) throws Exception {
         FollowEntity follow = followRepository.findFollow(fromUser, toUser)
                 .orElseThrow(() -> new Exception("FOLLOW_NOT_FOUND: 팔로우 관계가 존재하지 않습니다"));
 
         followRepository.delete(follow);
-        return "SUCCESS";
     }
 
     public List<UserDTO> getFollowingList(UserEntity user) {
@@ -80,4 +82,3 @@ public class FollowService {
         return followRepository.findFollowingsByUser(user).size();
     }
 }
-

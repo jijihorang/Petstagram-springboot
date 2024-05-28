@@ -25,5 +25,12 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedMethods("GET")
                 .allowedHeaders("*")
                 .allowCredentials(true);
+
+        // SSE 요청에 대한 CORS 설정 추가
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:5173")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true);
     }
 }

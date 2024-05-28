@@ -1,28 +1,27 @@
 package com.petstagram.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Getter
 @Setter
-@Table(name = "postLikes")
-public class PostLikeEntity {
+@Table(name = "replyCommentLikes")
+public class ReplyCommentLikeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private boolean postStatus;
+    private boolean replyCommentStatus;
 
-    // 좋아요 수와 게시물 사용자는 다대일 관계
+    // 좋아요 수와 사용자 관계 설정
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserEntity user;
 
-    // 좋아요 수와 게시물은 다대일 관계
+    // 좋아요 수와 대댓글 관계 설정
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id")
-    private PostEntity post;
+    @JoinColumn(name = "reply_comment_id")
+    private ReplyCommentEntity replyComment;
 }
