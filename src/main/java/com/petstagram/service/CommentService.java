@@ -1,9 +1,8 @@
 package com.petstagram.service;
 
 import com.petstagram.dto.CommentDTO;
-import com.petstagram.entity.CommentEntity;
-import com.petstagram.entity.PostEntity;
-import com.petstagram.entity.UserEntity;
+import com.petstagram.dto.UserDTO;
+import com.petstagram.entity.*;
 import com.petstagram.repository.CommentLikeRepository;
 import com.petstagram.repository.CommentRepository;
 import com.petstagram.repository.PostRepository;
@@ -14,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,6 +46,9 @@ public class CommentService {
 
         // 게시글에 댓글 추가
         post.addComment(commentEntity);
+
+        // 사용자가 작성한 댓글을 사용자의 댓글 목록에 추가
+        currentUser.addComment(commentEntity);
 
         // 댓글 저장
         CommentEntity savedEntity = commentRepository.save(commentEntity);
@@ -99,12 +102,84 @@ public class CommentService {
         CommentEntity commentEntity = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
 
-        // 댓글 소유자가 현재 인증된 사용자인지 확인
-        if (!commentEntity.getUser().getEmail().equals(username)) {
-            throw new IllegalStateException("댓글 삭제 권한이 없습니다.");
-        }
+//        // 댓글 소유자가 현재 인증된 사용자인지 확인
+//        /*if (!commentEntity.getUser().getEmail().equals(username)) {
+//            throw new IllegalStateException("댓글 삭제 권한이 없습니다.");
+//        }*/
 
         // 인증된 사용자가 소유자일 경우, 댓글 삭제
-        commentRepository.deleteById(commentId);
+        try {
+            commentRepository.deleteById(commentId);
+        } catch (Exception e) {
+            throw new RuntimeException("댓글 삭제 중 오류 발생");
+        }
+    }
+
+    // 댓글 좋아요 추가 또는 삭제
+    @Transactional
+    public void toggleCommentLike(Long commentId) {
+
+        // 댓글 찾기
+        CommentEntity comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 댓글이 존재하지 않습니다."));
+
+        // 현재 인증된 사용자의 이름(또는 이메일 등) 가져오기
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        // 좋아요가 이미 있는지 확인
+        Optional<CommentLikeEntity> commentLikeOpt  = commentLikeRepository.findByCommentAndUser(comment, user);
+
+        if (commentLikeOpt.isPresent()) {
+            // 좋아요 엔티티가 존재한다면, 상태를 false 로 설정하고 타임스탬프 업데이트
+            CommentLikeEntity commentLikeEntity = commentLikeOpt.get();
+            commentLikeEntity.setCommentStatus(!commentLikeEntity.isCommentStatus());
+            commentLikeRepository.delete(commentLikeEntity);
+        } else {
+            // 좋아요가 없다면 추가
+            CommentLikeEntity commentLikeEntity = new CommentLikeEntity();
+            commentLikeEntity.setComment(comment);
+            commentLikeEntity.setUser(user);
+            commentLikeEntity.setCommentStatus(true);
+            commentLikeRepository.save(commentLikeEntity);
+        }
+    }
+
+    // 댓글 좋아요 상태 조회
+    public CommentDTO getCommentLikeStatus(Long commentId) {
+        // 댓글 찾기
+        CommentEntity comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 댓글이 존재하지 않습니다."));
+
+        // 현재 인증된 사용자의 이름(또는 이메일 등) 가져오기
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        // 해당 댓글에 대한 사용자의 좋아요 여부 확인
+        boolean isLiked = commentLikeRepository.findByCommentAndUser(comment, user).isPresent();
+
+        // 해당 댓글의 총 좋아요 수 계산
+        long likeCount = commentLikeRepository.countByComment(comment);
+
+        // CommentDTO 객체 생성 및 반환
+        CommentDTO commentDTO = new CommentDTO();
+        commentDTO.setCommentLiked(isLiked);
+        commentDTO.setCommentLikesCount(likeCount);
+        return commentDTO;
+    }
+
+    // 댓글 좋아요 누른 사용자 리스트 조회
+    @Transactional(readOnly = true)
+    public List<UserDTO> getCommentLikedUsers(Long commentId) {
+        CommentEntity comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 댓글이 존재하지 않습니다."));
+
+        List<CommentLikeEntity> likes = commentLikeRepository.findByComment(comment);
+
+        return likes.stream()
+                .map(like -> UserDTO.toDTO(like.getUser()))
+                .collect(Collectors.toList());
     }
 }

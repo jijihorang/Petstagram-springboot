@@ -2,16 +2,12 @@ package com.petstagram.controller;
 
 import com.petstagram.dto.UserDTO;
 import com.petstagram.dto.UserProfileDTO;
-import com.petstagram.entity.UserEntity;
-import com.petstagram.repository.UserRepository;
-import com.petstagram.service.FollowService;
 import com.petstagram.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,7 +19,6 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
-    private final UserRepository userRepository;
 
     // 회원가입
     @PostMapping("/signup")
@@ -54,6 +49,7 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUser(userId, userDTO));
     }
 
+    // 회원 프로필 편집
     @PutMapping(value = "/edit/{userId}", consumes = {"multipart/form-data"})
     public ResponseEntity<String> editUser(@PathVariable Long userId,
                                            @RequestPart("user") UserDTO userDTO,

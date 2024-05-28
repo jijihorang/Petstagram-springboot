@@ -1,4 +1,3 @@
-
 package com.petstagram.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;

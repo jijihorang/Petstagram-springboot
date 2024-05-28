@@ -175,28 +175,25 @@ public class UserService {
         return userDTO;
     }
 
-
-    // 팔로우 관련 새로운 메소드 추가
+    // 팔로우 UserId 찾기
     public UserEntity getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("USER_NOT_FOUND: 사용자를 찾을 수 없습니다. 이메일: " + email));
     }
 
-
-    // 팔로우 관련 새로운 메소드 추가
     public UserEntity getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("USER_NOT_FOUND: 사용자를 찾을 수 없습니다. ID: " + userId));
     }
 
-    // 팔로워 메소드 추가
+    // 팔로워 갯수 증가 메소드 추가
     public int getFollowersCount(Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
         return followService.countFollowers(user);
     }
 
-    // 팔로잉 메소드 추가
+    // 팔로잉 갯수 증가 메소드 추가
     public int getFollowingsCount(Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));

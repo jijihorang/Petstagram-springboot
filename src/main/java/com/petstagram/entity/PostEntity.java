@@ -1,4 +1,3 @@
-
 package com.petstagram.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -26,10 +25,6 @@ public class PostEntity extends BaseEntity {
     private Long id; // 게시물 고유 식별자
 
     private String postContent; // 게시물 내용(텍스트, 이미지, 비디오 링크 등).
-
-    private Integer postLikesCount; // 게시물의 좋아요 수.
-
-    private Integer postCommentsCount; // 게시물에 달린 댓글 수.
 
     // 게시물과 사용자는 다대일 관계
     @ManyToOne(fetch = FetchType.LAZY) // FetchType.LAZY 는 지연 로딩을 의미

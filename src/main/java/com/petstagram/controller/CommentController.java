@@ -1,6 +1,7 @@
 package com.petstagram.controller;
 
 import com.petstagram.dto.CommentDTO;
+import com.petstagram.dto.UserDTO;
 import com.petstagram.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -8,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequiredArgsConstructor
@@ -45,5 +47,26 @@ public class CommentController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("댓글 삭제에 실패헀습니다.");
         }
+    }
+
+    // 댓글 좋아요 추가 및 삭제
+    @PostMapping("/toggle/{commentId}")
+    public ResponseEntity<String> toggleCommentLike(@PathVariable("commentId") Long commentId) {
+        commentService.toggleCommentLike(commentId);
+        return ResponseEntity.ok("게시물에 좋아요가 추가되었습니다.");
+    }
+
+    // 댓글 좋아요 상태 조회
+    @GetMapping("/status/{commentId}")
+    public ResponseEntity<CommentDTO> getPostCommentStatus(@PathVariable("commentId") Long commentId) {
+        CommentDTO likeStatus = commentService.getCommentLikeStatus(commentId);
+        return ResponseEntity.ok(likeStatus);
+    }
+
+    // 댓글 좋아요를 누른 사용자 리스트 조회
+    @GetMapping("/liked/{commentId}")
+    public ResponseEntity<List<UserDTO>> getCommentLikedUsers(@PathVariable("commentId") Long commentId) {
+        List<UserDTO> liked = commentService.getCommentLikedUsers(commentId);
+        return ResponseEntity.ok(liked);
     }
 }

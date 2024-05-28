@@ -20,9 +20,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
-    //   @Autowired
-//   private CustomOAuth2UserService customOAuth2UserService;
     @Autowired
     private OurUserDetailsService ourUserDetailsService;
     @Autowired
@@ -33,7 +30,7 @@ public class SecurityConfig {
         httpSecurity.csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(request -> {
-                    request.requestMatchers("/", "/oauth2/**", "/login/**", "/user/**", "/public/**", "/uploads/**").permitAll()
+                    request.requestMatchers("/", "/oauth2/**", "/login/**", "/user/**", "/post/**", "/comment/**","/public/**", "/uploads/**").permitAll()
                             .requestMatchers("/admin/**").hasAnyAuthority("ADMIN", "USER")
                             .requestMatchers("/adminuser/**").hasAnyAuthority("ADMIN", "USER")
                             .anyRequest().authenticated();
