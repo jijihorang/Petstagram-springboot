@@ -45,7 +45,7 @@ public class CommentController {
             commentService.deleteComment(commentId);
             return ResponseEntity.ok("댓글이 삭제되었습니다.");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("댓글 삭제에 실패했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("댓글 삭제에 실패헀습니다.");
         }
     }
 
