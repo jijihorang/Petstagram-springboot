@@ -90,10 +90,13 @@ public class CommentController {
         try {
             commentService.deleteReplyComment(replyCommentId);
             return ResponseEntity.ok("대댓글이 삭제되었습니다.");
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("대댓글 삭제 권한이 없습니다.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("대댓글 삭제에 실패했습니다.");
         }
     }
+
 
     // 대댓글 좋아요 추가 또는 삭제
     @PostMapping("/replytoggle/{replyCommentId}")

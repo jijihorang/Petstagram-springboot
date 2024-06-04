@@ -6,6 +6,7 @@ import com.petstagram.entity.ImageEntity;
 import com.petstagram.entity.PostEntity;
 import com.petstagram.entity.PostLikeEntity;
 import com.petstagram.entity.UserEntity;
+import com.petstagram.repository.NotificationRepository;
 import com.petstagram.repository.PostLikeRepository;
 import com.petstagram.repository.PostRepository;
 import com.petstagram.repository.UserRepository;
@@ -27,8 +28,10 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
+    private final NotificationRepository notificationRepository;
     private final FileUploadService fileUploadService;
     private final NotificationService notificationService;
+
 
     // 게시글 리스트 및 좋아요 개수 조회
     @Transactional(readOnly = true)
@@ -152,6 +155,9 @@ public class PostService {
         if (!postEntity.getUser().getEmail().equals(username)) {
             throw new IllegalStateException("게시글 삭제 권한이 없습니다.");
         }
+
+        // 댓글과 관련된 모든 알림을 삭제
+        notificationRepository.deleteByPostId(postId);
 
         // 인증된 사용자가 소유자일 경우, 게시글 삭제
         postRepository.deleteById(postId);

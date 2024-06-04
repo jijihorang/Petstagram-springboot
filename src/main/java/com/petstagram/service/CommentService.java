@@ -28,6 +28,7 @@ public class CommentService {
 
     private final ReplyCommentRepository replyCommentRepository;
     private final ReplyCommentLikeRepository replyCommentLikeRepository;
+    private final NotificationRepository notificationRepository;
 
     // 댓글 작성
     public Long writeComment(Long postId, CommentDTO commentDTO) {
@@ -110,11 +111,16 @@ public class CommentService {
         CommentEntity commentEntity = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 댓글을 찾을 수 없습니다."));
 
-//        // 댓글 소유자가 현재 인증된 사용자인지 확인
-//        /*if (!commentEntity.getUser().getEmail().equals(username)) {
-//            throw new IllegalStateException("댓글 삭제 권한이 없습니다.");
-//        }*/
+        // 댓글이 속한 게시글의 작성자 확인
+        UserEntity postAuthor = commentEntity.getPost().getUser();
 
+        // 댓글 소유자가 현재 인증된 사용자이거나 댓글이 속한 게시글의 작성자가 현재 인증된 사용자일 경우에만 삭제 가능
+        if (!commentEntity.getUser().getEmail().equals(username) && !postAuthor.getEmail().equals(username)) {
+            throw new IllegalStateException("댓글 삭제 권한이 없습니다.");
+        }
+
+        // 댓글과 관련된 모든 알림을 삭제
+        notificationRepository.deleteByCommentId(commentId);
 
         // 댓글에 달린 모든 대댓글을 삭제
         List<ReplyCommentEntity> replyComments = commentEntity.getReplyCommentList();
@@ -245,19 +251,24 @@ public class CommentService {
         ReplyCommentEntity replyCommentEntity = replyCommentRepository.findById(replyCommentId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 대댓글을 찾을 수 없습니다."));
 
-        /* 대댓글 소유자가 현재 인증된 사용자인지 확인
-        if (!replyCommentEntity.getUser().getEmail().equals(username)) {
+        // 대댓글이 속한 댓글의 게시물 작성자 확인
+        Long postAuthorId = replyCommentEntity.getComment().getPost().getUser().getId();
+        Long replyCommentAuthorId = replyCommentEntity.getUser().getId();
+        Long currentUserId = userRepository.findByEmail(username)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다.")).getId();
+
+        // 로그인한 사용자가 게시물 작성자인 경우 모든 대댓글 삭제 가능
+        // 또는 대댓글 작성자인 경우 자신의 대댓글 삭제 가능
+        if (postAuthorId.equals(currentUserId) || replyCommentAuthorId.equals(currentUserId)) {
+            // 대댓글 좋아요 삭제
+            replyCommentLikeRepository.deleteByReplyComment(replyCommentEntity);
+
+            // 대댓글 삭제
+            replyCommentRepository.delete(replyCommentEntity);
+        } else {
             throw new IllegalStateException("대댓글 삭제 권한이 없습니다.");
-        }*/
-
-        // 대댓글 좋아요 삭제
-        replyCommentLikeRepository.deleteByReplyComment(replyCommentEntity);
-
-        // 대댓글 삭제
-        replyCommentRepository.delete(replyCommentEntity);
+        }
     }
-
-
 
 
     // 대댓글 좋아요 추가 또는 삭제
