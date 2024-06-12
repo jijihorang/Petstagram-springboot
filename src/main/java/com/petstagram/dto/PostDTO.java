@@ -27,6 +27,8 @@ public class PostDTO {
     private boolean postLiked; // 게시물 좋아요 상태
     private long postLikesCount; // 게시물의 좋아요 수.
 
+    private String location; // 위치
+
     // Entity -> DTO
     public static PostDTO toDTO(PostEntity postEntity) {
         return PostDTO.builder()
@@ -40,6 +42,7 @@ public class PostDTO {
                 .commentList(postEntity.getCommentList().stream()
                         .map(CommentDTO::toDTO)
                         .collect(Collectors.toList()))
+                .location(postEntity.getLocation())
                 .build();
     }
 }
