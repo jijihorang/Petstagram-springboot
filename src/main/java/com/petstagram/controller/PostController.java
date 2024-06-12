@@ -55,9 +55,21 @@ public class PostController {
 
     // 게시글 수정
     @PutMapping("/update/{postId}")
-    public ResponseEntity<PostDTO> updatePost(@PathVariable Long postId, @RequestPart("post") PostDTO postDTO, @RequestPart("file") MultipartFile file) {
-        return ResponseEntity.ok(postService.updatePost(postId, postDTO, file));
+    public ResponseEntity<PostDTO> updatePost(@PathVariable Long postId,
+                                              @RequestPart("post") PostDTO postDTO,
+                                              @RequestPart(value = "file", required = false) MultipartFile file,
+                                              @RequestPart(value = "breed", required = false) String breed,
+                                              @RequestPart(value = "imageUrl", required = false) String imageUrl) {
+        try {
+            postDTO.setBreed(breed);
+            PostDTO updatedPost = postService.updatePost(postId, postDTO, file, imageUrl);
+            return ResponseEntity.ok(updatedPost);
+        } catch (Exception e) {
+            log.error("게시글 수정 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
+
 
 
     // 게시글 삭제

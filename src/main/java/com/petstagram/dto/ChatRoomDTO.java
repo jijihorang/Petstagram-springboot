@@ -1,8 +1,6 @@
 package com.petstagram.dto;
 
 import com.petstagram.entity.ChatRoomEntity;
-import com.petstagram.entity.CommentEntity;
-import com.petstagram.entity.MessageEntity;
 import com.petstagram.entity.UserEntity;
 import lombok.Builder;
 import lombok.Getter;

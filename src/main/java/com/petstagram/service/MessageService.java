@@ -2,7 +2,6 @@
 package com.petstagram.service;
 
 import com.petstagram.dto.MessageDTO;
-import com.petstagram.entity.ChatRoomEntity;
 import com.petstagram.entity.ImageEntity;
 import com.petstagram.entity.MessageEntity;
 import com.petstagram.entity.UserEntity;

@@ -1,15 +1,17 @@
+
 package com.petstagram.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.petstagram.dto.CommentDTO;
 import jakarta.persistence.*;
 import lombok.*;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+// 댓글
 @Entity
 @Getter
 @Setter

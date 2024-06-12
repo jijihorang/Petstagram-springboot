@@ -1,6 +1,5 @@
 package com.petstagram.dto;
 
-import com.petstagram.entity.ChatRoomEntity;
 import com.petstagram.entity.MessageEntity;
 import lombok.*;
 

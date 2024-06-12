@@ -29,11 +29,13 @@ public class UserProfileDTO {
 
     private List<UserEntity> userEntityList;
 
-    public UserProfileDTO(Long id, String name, String email, ProfileImageDTO profileImage) {
+    public UserProfileDTO(Long id, String name, String email, ProfileImageDTO profileImage, String bio, Boolean isRecommend) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.profileImage = profileImage;
+        this.bio = bio;
+        this.isRecommend = isRecommend;
     }
 
     // Entity -> DTO

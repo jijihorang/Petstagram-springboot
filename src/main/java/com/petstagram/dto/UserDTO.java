@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -29,6 +31,7 @@ public class UserDTO {
     private ProfileImageDTO profileImage;
 
     private UserEntity userEntity;
+    private List<UserEntity> userEntityList;
 
     // Entity -> DTO
     public static UserDTO toDTO(UserEntity userEntity) {

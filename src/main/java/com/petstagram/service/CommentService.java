@@ -23,38 +23,30 @@ public class CommentService {
     private final CommentLikeRepository commentLikeRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
-    private final NotificationService notificationService;
-
-
     private final ReplyCommentRepository replyCommentRepository;
     private final ReplyCommentLikeRepository replyCommentLikeRepository;
     private final NotificationRepository notificationRepository;
 
+    private final NotificationService notificationService;
+
     // 댓글 작성
     public Long writeComment(Long postId, CommentDTO commentDTO) {
-        // 게시글 찾기
         PostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다."));
 
-        // 현재 인증된 사용자의 이름(또는 이메일 등의 식별 정보) 가져오기
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        // 사용자 찾기
         UserEntity currentUser = userRepository.findByEmail(username)
                 .orElseThrow(() -> new IllegalArgumentException("현재 사용자를 찾을 수 없습니다."));
 
-        // DTO 를 Entity 로 변환하고 게시글 정보 설정
         CommentEntity commentEntity = CommentEntity.toEntity(commentDTO);
-        commentEntity.setPost(post); // 댓글이 속한 게시글 설정
-        commentEntity.setUser(currentUser); // 댓글을 작성한 사용자 설정
+        commentEntity.setPost(post);
+        commentEntity.setUser(currentUser);
 
-        // 게시글에 댓글 추가
         post.addComment(commentEntity);
 
-        // 사용자가 작성한 댓글을 사용자의 댓글 목록에 추가
         currentUser.addComment(commentEntity);
 
-        // 댓글 저장
         CommentEntity savedEntity = commentRepository.save(commentEntity);
 
         // 댓글 알림 추가
@@ -62,7 +54,6 @@ public class CommentService {
         Long postAuthorId = post.getUser().getId();
         notificationService.sendNotification(postAuthorId, "comment", currentUser.getId(), postId, commentId);
 
-        // 저장된 댓들의 ID 반환
         return savedEntity.getId();
     }
 
@@ -102,7 +93,6 @@ public class CommentService {
         return CommentDTO.toDTO(commentEntity);
     }
 
-    // 댓글 삭제
     public void deleteComment(Long commentId) {
         // 현재 인증된 사용자의 이름(또는 이메일 등의 식별 정보) 가져오기
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -134,6 +124,7 @@ public class CommentService {
         commentRepository.delete(commentEntity);
     }
 
+
     // 댓글 좋아요 추가 또는 삭제
     @Transactional
     public void toggleCommentLike(Long commentId) {
@@ -148,7 +139,7 @@ public class CommentService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         // 좋아요가 이미 있는지 확인
-        Optional<CommentLikeEntity> commentLikeOpt  = commentLikeRepository.findByCommentAndUser(comment, user);
+        Optional<CommentLikeEntity> commentLikeOpt = commentLikeRepository.findByCommentAndUser(comment, user);
 
         if (commentLikeOpt.isPresent()) {
             // 좋아요 엔티티가 존재한다면, 상태를 false 로 설정하고 타임스탬프 업데이트
@@ -167,11 +158,9 @@ public class CommentService {
 
     // 댓글 좋아요 상태 조회
     public CommentDTO getCommentLikeStatus(Long commentId) {
-        // 댓글 찾기
         CommentEntity comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 댓글이 존재하지 않습니다."));
 
-        // 현재 인증된 사용자의 이름(또는 이메일 등) 가져오기
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         UserEntity user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
@@ -189,7 +178,6 @@ public class CommentService {
         return commentDTO;
     }
 
-    // 댓글 좋아요 누른 사용자 리스트 조회
     @Transactional(readOnly = true)
     public List<UserDTO> getCommentLikedUsers(Long commentId) {
         CommentEntity comment = commentRepository.findById(commentId)
@@ -204,18 +192,14 @@ public class CommentService {
 
     // 대댓글 작성
     public Long writeReplyComment(Long commentId, ReplyCommentDTO replyCommentDTO) {
-        // 댓글 찾기
         CommentEntity comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 댓글이 존재하지 않습니다."));
 
-        // 현재 인증된 사용자의 이름(또는 이메일 등의 식별 정보) 가져오기
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        // 사용자 찾기
         UserEntity currentUser = userRepository.findByEmail(username)
                 .orElseThrow(() -> new IllegalArgumentException("현재 사용자를 찾을 수 없습니다."));
 
-        // DTO를 Entity로 변환하고 댓글 정보 설정
         if (replyCommentDTO.getReplyCommentContent() == null || replyCommentDTO.getReplyCommentContent().isEmpty()) {
             throw new IllegalArgumentException("대댓글 내용은 비어 있을 수 없습니다.");
         }
@@ -226,16 +210,14 @@ public class CommentService {
                 .user(currentUser)
                 .build();
 
-        // 댓글에 대댓글 추가
         comment.addReplyComment(replyCommentEntity);
 
-        // 저장
         ReplyCommentEntity savedEntity = replyCommentRepository.save(replyCommentEntity);
 
         return savedEntity.getId();
     }
 
-    // 대댓글 리스트 조회
+    // 대댓글 조회
     @Transactional(readOnly = true)
     public List<ReplyCommentDTO> getReplyCommentList(Long commentId) {
         List<ReplyCommentEntity> replyCommentList = replyCommentRepository.findByCommentId(commentId);
@@ -244,14 +226,11 @@ public class CommentService {
 
     // 대댓글 삭제
     public void deleteReplyComment(Long replyCommentId) {
-        // 현재 인증된 사용자의 이름(또는 이메일 등의 식별 정보) 가져오기
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        // 대댓글 ID로 대댓글 찾기
         ReplyCommentEntity replyCommentEntity = replyCommentRepository.findById(replyCommentId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 대댓글을 찾을 수 없습니다."));
 
-        // 대댓글이 속한 댓글의 게시물 작성자 확인
         Long postAuthorId = replyCommentEntity.getComment().getPost().getUser().getId();
         Long replyCommentAuthorId = replyCommentEntity.getUser().getId();
         Long currentUserId = userRepository.findByEmail(username)
@@ -260,16 +239,12 @@ public class CommentService {
         // 로그인한 사용자가 게시물 작성자인 경우 모든 대댓글 삭제 가능
         // 또는 대댓글 작성자인 경우 자신의 대댓글 삭제 가능
         if (postAuthorId.equals(currentUserId) || replyCommentAuthorId.equals(currentUserId)) {
-            // 대댓글 좋아요 삭제
             replyCommentLikeRepository.deleteByReplyComment(replyCommentEntity);
-
-            // 대댓글 삭제
             replyCommentRepository.delete(replyCommentEntity);
         } else {
             throw new IllegalStateException("대댓글 삭제 권한이 없습니다.");
         }
     }
-
 
     // 대댓글 좋아요 추가 또는 삭제
     public void toggleReplyCommentLike(Long replyCommentId) {
@@ -325,5 +300,4 @@ public class CommentService {
                 .map(like -> UserDTO.toDTO(like.getUser()))
                 .collect(Collectors.toList());
     }
-
 }

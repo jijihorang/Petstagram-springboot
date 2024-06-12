@@ -44,8 +44,6 @@ public class CommentController {
         try {
             commentService.deleteComment(commentId);
             return ResponseEntity.ok("댓글이 삭제되었습니다.");
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("댓글 삭제 권한이 없습니다.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("댓글 삭제에 실패헀습니다.");
         }
@@ -65,9 +63,9 @@ public class CommentController {
         return ResponseEntity.ok(likeStatus);
     }
 
-    // 댓글 좋아요를 누른 사용자 리스트 조회
+    // 댓글 좋아요 사용자 조회
     @GetMapping("/liked/{commentId}")
-    public ResponseEntity<List<UserDTO>> getCommentLikedUsers(@PathVariable("commentId") Long commentId) {
+    public ResponseEntity<List<UserDTO>> getUsers(@PathVariable("commentId") Long commentId) {
         List<UserDTO> liked = commentService.getCommentLikedUsers(commentId);
         return ResponseEntity.ok(liked);
     }

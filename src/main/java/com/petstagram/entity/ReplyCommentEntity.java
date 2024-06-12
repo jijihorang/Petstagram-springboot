@@ -16,22 +16,22 @@ public class ReplyCommentEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "reply_comment_id")
-    private Long id; // 대댓글의 고유 식별자.
+    private Long id;
 
     @Column(nullable = false)
-    private String replyCommentContent; // 대댓글 내용.
+    private String replyCommentContent;
 
     // 대댓글과 사용자는 다대일 관계
-    @ManyToOne(fetch = FetchType.LAZY) // FetchType.LAZY 는 지연 로딩을 의미
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @JsonIgnore
-    private UserEntity user; // 대댓글 작성자의 식별자.
+    private UserEntity user;
 
     // 대댓글과 댓글은 다대일 관계
-    @ManyToOne(fetch = FetchType.LAZY) // FetchType.LAZY 는 지연 로딩을 의미
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comment_id")
     @JsonIgnore
-    private CommentEntity comment; // 대댓글이 속한 댓글.
+    private CommentEntity comment;
 
     // == 연관관계 편의 메서드 == //
     // 댓글에 대댓글 추가하는 메서드

@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.sql.Timestamp;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,7 +16,6 @@ public class FollowDTO {
     private Long id;
     private Long fromUserId;
     private Long toUserId;
-    private Timestamp createDate;
     private Boolean status;
 
     // FollowEntity에서 FollowDTO로 변환하는 메소드
@@ -27,7 +24,6 @@ public class FollowDTO {
                 .id(followEntity.getId())
                 .fromUserId(followEntity.getFromUser().getId())
                 .toUserId(followEntity.getToUser().getId())
-                .createDate(followEntity.getCreateDate())
                 .status(followEntity.getStatus())
                 .build();
     }

@@ -1,7 +1,6 @@
 package com.petstagram.controller;
 
 import com.petstagram.dto.ChatRoomDTO;
-import com.petstagram.entity.ChatRoomEntity;
 import com.petstagram.service.ChatRoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

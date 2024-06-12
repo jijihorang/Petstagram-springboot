@@ -1,8 +1,6 @@
 package com.petstagram.repository;
 
 import com.petstagram.entity.NotificationEntity;
-import com.petstagram.entity.PostEntity;
-import com.petstagram.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -22,6 +20,5 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
 
     // 댓글 ID로 알림 삭제
     void deleteByCommentId(Long commentId);
-
     void deleteByPostId(Long postId);
 }
