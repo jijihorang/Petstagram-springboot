@@ -28,6 +28,8 @@ public class PostEntity extends BaseEntity {
 
     private String breed; // 강아지 종류 텐서플로우로 분류
 
+    private String location; // 위치
+
     // 게시물과 사용자는 다대일 관계
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -54,6 +56,7 @@ public class PostEntity extends BaseEntity {
                 .breed(dto.getBreed())
                 .imageList(new ArrayList<>())
                 .commentList(new ArrayList<>())
+                .location(dto.getLocation())
                 .build();
     }
 
