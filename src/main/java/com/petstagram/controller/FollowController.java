@@ -133,4 +133,16 @@ public class FollowController {
             return ResponseEntity.badRequest().body(false);
         }
     }
+
+    @GetMapping("/followersCount/{userId}")
+    public ResponseEntity<Integer> getFollowersCount(@PathVariable Long userId) {
+        int count = followService.getFollowersCount(userId);
+        return ResponseEntity.ok(count);
+    }
+
+    @GetMapping("/followingsCount/{userId}")
+    public ResponseEntity<Integer> getFollowingsCount(@PathVariable Long userId) {
+        int count = followService.getFollowingsCount(userId);
+        return ResponseEntity.ok(count);
+    }
 }

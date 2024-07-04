@@ -33,6 +33,10 @@ public class NotificationEntity extends BaseEntity {
     @JoinColumn(name = "comment_id")
     private CommentEntity comment;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reply_id")
+    private ReplyCommentEntity reply;
+
     private String eventType;
 }
 

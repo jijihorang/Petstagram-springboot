@@ -1,5 +1,6 @@
 package com.petstagram.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,5 +25,6 @@ public class PostLikeEntity {
     // 좋아요 수와 게시물은 다대일 관계
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
+    @JsonIgnore
     private PostEntity post;
 }

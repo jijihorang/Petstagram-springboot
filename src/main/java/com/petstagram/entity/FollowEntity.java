@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "follows")
@@ -26,10 +27,6 @@ public class FollowEntity {
     @ManyToOne
     @JoinColumn(name = "to_user")
     private UserEntity toUser;
-
-//    @CreationTimestamp
-//    @Column(name = "create_date")
-//    private Timestamp createDate;
 
     @Column(name = "follow_status")
     private Boolean status;

@@ -18,17 +18,18 @@ import java.util.List;
 @AllArgsConstructor
 public class UserDTO {
 
-    private Long id;    // 사용자의 고유 식별자
-    private String name;    // 사용자의 이름
-    private String email;   // 사용자의 이메일
-    private String password;    // 사용자의 비밀번호
-    private String role = "USER";   // 사용자의 역할
-    private String gender; // 성별
-    private String bio; // 사용자 소개
-    private Boolean isRecommend; // 추천 여부, 기본값은 false
-    private String token;   // 사용자의 세션 또는 인증을 확인하기 위해 사용되는 JWT
-    private String refreshToken;    // token 이 만료되었을 때, 새로운 token 을 발급받기 위해 사용되는 토큰
+    private Long id;
+    private String name;
+    private String email;
+    private String password;
+    private String role = "USER";
+    private String gender;
+    private String bio;
+    private Boolean isRecommend;
+    private String token;
+    private String refreshToken;
     private ProfileImageDTO profileImage;
+    private String phone;
 
     private UserEntity userEntity;
     private List<UserEntity> userEntityList;
@@ -43,6 +44,7 @@ public class UserDTO {
                 .gender(userEntity.getGender())
                 .bio(userEntity.getBio())
                 .isRecommend(userEntity.getIsRecommend())
+                .phone(userEntity.getPhone())
                 .build();
 
         if (userEntity.getProfileImage() != null) {

@@ -43,10 +43,22 @@ public class UserController {
         return ResponseEntity.ok(userService.refreshToken(userDTO));
     }
 
-    // 회원수정
-    @PutMapping("/update/{userId}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable Long userId, @RequestBody UserDTO userDTO) {
-        return ResponseEntity.ok(userService.updateUser(userId, userDTO));
+    // 회원 비밀번호 수정
+    @PutMapping("/update/password/{userId}")
+    public ResponseEntity<UserDTO> updatePassword(@PathVariable Long userId, @RequestBody UserDTO userDTO) {
+        return ResponseEntity.ok(userService.updatePassword(userId, userDTO));
+    }
+
+    // 회원 Email 수정
+    @PutMapping("/update/email/{userId}")
+    public ResponseEntity<UserDTO> updateEmail(@PathVariable Long userId, @RequestBody UserDTO userDTO) {
+        return ResponseEntity.ok(userService.updateEmail(userId, userDTO));
+    }
+
+    // 회원 name 수정
+    @PutMapping("/update/name/{userId}")
+    public ResponseEntity<UserDTO> updateName(@PathVariable Long userId, @RequestBody UserDTO userDTO) {
+        return ResponseEntity.ok(userService.updateName(userId, userDTO));
     }
 
     // 회원 프로필 편집
@@ -55,8 +67,6 @@ public class UserController {
                                            @RequestPart("user") UserDTO userDTO,
                                            @RequestPart(value = "file", required = false) MultipartFile file) {
         try {
-            System.out.println("수신된 userDTO 데이터: " + userDTO);
-
             userService.editUser(userId, userDTO, file);
             return ResponseEntity.ok("수정 성공");
         } catch (Exception e) {
@@ -75,7 +85,7 @@ public class UserController {
         }
     }
 
-    // 회원 마이페이지
+    // 현재 로그인 회원 정보 조회
     @GetMapping("/profile")
     public ResponseEntity<UserDTO> getMyProfile() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -84,29 +94,9 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    // 회원 모두 조회
+    // 모든 회원 정보 조회
     @GetMapping("/getAllUsers")
     public List<UserProfileDTO> getAllUserProfiles() {
         return userService.getAllUserProfiles();
-    }
-
-    // 회원 한명 조회
-    @GetMapping("/get/{userId}")
-    public ResponseEntity<UserDTO> getUSerByID(@PathVariable Long userId) {
-        return ResponseEntity.ok(userService.getUsersById(userId));
-    }
-
-    // 팔로워 갯수
-    @GetMapping("/followersCount/{userId}")
-    public ResponseEntity<Integer> getFollowersCount(@PathVariable Long userId) {
-        int count = userService.getFollowersCount(userId);
-        return ResponseEntity.ok(count);
-    }
-
-    // 팔로잉 갯수
-    @GetMapping("/followingsCount/{userId}")
-    public ResponseEntity<Integer> getFollowingsCount(@PathVariable Long userId) {
-        int count = userService.getFollowingsCount(userId);
-        return ResponseEntity.ok(count);
     }
 }

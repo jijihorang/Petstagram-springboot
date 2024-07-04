@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Getter
 @Setter
@@ -32,6 +35,14 @@ public class ReplyCommentEntity extends BaseEntity {
     @JoinColumn(name = "comment_id")
     @JsonIgnore
     private CommentEntity comment;
+
+    // 대댓글과 좋아요 수는 일대다 관계
+    @OneToMany(mappedBy = "replyComment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<ReplyCommentLikeEntity> replyCommentLikeList = new HashSet<>();
+
+    public Long getPostId() {
+        return comment.getPost().getId();
+    }
 
     // == 연관관계 편의 메서드 == //
     // 댓글에 대댓글 추가하는 메서드

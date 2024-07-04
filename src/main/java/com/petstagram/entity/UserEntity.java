@@ -1,4 +1,3 @@
-
 package com.petstagram.entity;
 
 import com.petstagram.dto.ProfileImageDTO;
@@ -29,15 +28,18 @@ public class UserEntity implements UserDetails {
     private String name;
     private String password;
     private String role = "USER";
-
-    // 추가
-    private String gender; // 성별
-    private String bio; // 사용자 소개
-    private Boolean isRecommend; // 추천 여부, 기본값은 false
+    private String gender;
+    private String bio;
+    private Boolean isRecommend;
+    private String phone;
 
     // 사용자와 게시물은 일대다 관계
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostEntity> postList = new ArrayList<>();
+
+    // 사용자와 스토리는 일대다 관계
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<StoryEntity> storyList = new ArrayList<>();
 
     // 사용자와 댓글은 일대다 관계
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -47,9 +49,12 @@ public class UserEntity implements UserDetails {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private ProfileImageEntity profileImage;
 
-    // 채팅방과 사용자는 다대다 관계
-    @ManyToMany(mappedBy = "users")
-    private Set<ChatRoomEntity> chatRooms = new HashSet<>();
+    // 채팅방과 사용자는 일대다 관계
+    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatRoomEntity> sentChatRooms = new ArrayList<>();
+
+    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatRoomEntity> receivedChatRooms = new ArrayList<>();
 
     // 사용자와 메시지는 일대다 관계
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -68,28 +73,28 @@ public class UserEntity implements UserDetails {
         post.setUser(this);
     }
 
+    // 스토리 관련 메서드
+    public void addStory(StoryEntity story) {
+        storyList.add(story);
+        story.setUser(this);
+    }
+
     // 댓글 관련 메서드
     public void addComment(CommentEntity comment) {
         commentList.add(comment);
         comment.setUser(this);
     }
 
-    // 메시지 보내기 관련 메서드
-    public void addSentMessage(MessageEntity message) {
-        sentMessages.add(message);
-        message.setSender(this);
+    // 채팅방 관련 메서드
+    public void addSentChatRoom(ChatRoomEntity chatRoom) {
+        this.sentChatRooms.add(chatRoom);
+        chatRoom.setSender(this);
     }
 
-    // 메시지 받기 관련 메서드
-    public void addReceivedMessage(MessageEntity message) {
-        receivedMessages.add(message);
-        message.setReceiver(this);
-    }
-
-    // 채팅방 참여 관련 메서드
-    public void joinChatRoom(ChatRoomEntity chatRoom) {
-        this.chatRooms.add(chatRoom);
-        chatRoom.getUsers().add(this);
+    // 채팅방 관련 메서드
+    public void addReceivedChatRoom(ChatRoomEntity chatRoom) {
+        this.receivedChatRooms.add(chatRoom);
+        chatRoom.setReceiver(this);
     }
 
 
@@ -104,6 +109,7 @@ public class UserEntity implements UserDetails {
                 .gender(userDTO.getGender())
                 .bio(userDTO.getBio())
                 .isRecommend(userDTO.getIsRecommend())
+                .phone(userDTO.getPhone())
                 .build();
 
         // ProfileImageDTO가 존재하면 ProfileImageEntity로 변환하여 설정

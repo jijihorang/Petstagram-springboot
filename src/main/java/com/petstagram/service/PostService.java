@@ -1,15 +1,10 @@
+
 package com.petstagram.service;
 
 import com.petstagram.dto.PostDTO;
 import com.petstagram.dto.UserDTO;
-import com.petstagram.entity.ImageEntity;
-import com.petstagram.entity.PostEntity;
-import com.petstagram.entity.PostLikeEntity;
-import com.petstagram.entity.UserEntity;
-import com.petstagram.repository.NotificationRepository;
-import com.petstagram.repository.PostLikeRepository;
-import com.petstagram.repository.PostRepository;
-import com.petstagram.repository.UserRepository;
+import com.petstagram.entity.*;
+import com.petstagram.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,8 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,9 +26,10 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
     private final NotificationRepository notificationRepository;
-
+    private final HashTagRepository hashTagRepository;
     private final FileUploadService fileUploadService;
     private final NotificationService notificationService;
+    private final PostHashTagRepository postHashTagRepository;
 
     // 게시글 리스트 및 좋아요 개수 조회
     @Transactional(readOnly = true)
@@ -49,9 +47,9 @@ public class PostService {
         }).collect(Collectors.toList());
     }
 
-
     // 게시글 작성
-    public void writePost(PostDTO dto, MultipartFile file) {
+    @Transactional
+    public void writePost(PostDTO dto, List<MultipartFile> files, List<String> hashtagNames) {
         // 현재 인증된 사용자의 이름(또는 이메일 등의 식별 정보) 가져오기
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -66,13 +64,46 @@ public class PostService {
         userEntity.addPost(postEntity);
         postEntity.setUser(userEntity);
 
-        // 이미지 업로드 처리
-        if (file != null && !file.isEmpty()) {
-            String fileName = fileUploadService.storeFile(file);
-            ImageEntity imageEntity = new ImageEntity();
-            imageEntity.setImageUrl(fileName);
-            imageEntity.setPost(postEntity);
-            postEntity.getImageList().add(imageEntity);
+        // 파일 업로드 처리
+        if (files != null && !files.isEmpty()) {
+            for (MultipartFile file : files) {
+                if (file != null && !file.isEmpty()) {
+                    String fileName = fileUploadService.storeFile(file);
+                    String contentType = file.getContentType();
+
+                    if (contentType != null) {
+                        if (contentType.startsWith("image/")) {
+                            ImageEntity imageEntity = new ImageEntity();
+                            imageEntity.setImageUrl(fileName);
+                            imageEntity.setPost(postEntity);
+                            postEntity.getImageList().add(imageEntity);
+                        } else if (contentType.startsWith("video/")) {
+                            VideoEntity videoEntity = new VideoEntity();
+                            videoEntity.setVideoUrl(fileName);
+                            videoEntity.setPost(postEntity);
+                            postEntity.getVideoList().add(videoEntity);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 해시태그 처리 (중복 제거를 위해 Set 사용)
+        if (hashtagNames != null && !hashtagNames.isEmpty()) {
+            Set<String> uniqueHashtags = new HashSet<>(hashtagNames);
+            System.out.println("해시태그 리스트 (중복 제거 후): " + uniqueHashtags);
+
+            for (String name : uniqueHashtags) {
+                System.out.println("해시태그 처리 중: " + name);
+                HashTagEntity hashtag = hashTagRepository.findByName(name)
+                        .orElseGet(() -> {
+                            HashTagEntity newHashtag = new HashTagEntity();
+                            newHashtag.setName(name);
+                            return hashTagRepository.save(newHashtag);
+                        });
+                System.out.println("해시태그 저장됨: " + hashtag.getName());
+                postEntity.addHashtag(hashtag);
+            }
         }
 
         // DB에 저장
@@ -82,7 +113,7 @@ public class PostService {
     // 게시글 상세보기 및 좋아요 개수 조회
     @Transactional(readOnly = true)
     public PostDTO readPost(Long postId) {
-        PostEntity postEntity = postRepository.findById(postId)
+        PostEntity postEntity = postRepository.findByIdWithUser(postId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 게시물을 찾을 수 없습니다."));
 
         long likesCount = postLikeRepository.countByPost(postEntity);
@@ -96,7 +127,7 @@ public class PostService {
     // 사용자가 작성한 모든 게시물 및 좋아요 개수 조회
     @Transactional(readOnly = true)
     public List<PostDTO> getPostsByUserId(Long userId) {
-        List<PostEntity> postEntityList = postRepository.findByUserId(userId);
+        List<PostEntity> postEntityList = postRepository.findByUserIdWithLikes(userId);
 
         return postEntityList.stream().map(postEntity -> {
             PostDTO postDTO = PostDTO.toDTO(postEntity);
@@ -109,7 +140,7 @@ public class PostService {
     }
 
     // 게시글 수정
-    public PostDTO updatePost(Long postId, PostDTO postDTO, MultipartFile file, String imageUrl) {
+    public PostDTO updatePost(Long postId, PostDTO postDTO, List<MultipartFile> files, List<String> imageUrls, String videoUrl) {
         PostEntity postEntity = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 게시물을 찾을 수 없습니다. ID: " + postId));
 
@@ -121,28 +152,55 @@ public class PostService {
         postEntity.setPostContent(postDTO.getPostContent());
         postEntity.setBreed(postDTO.getBreed());
 
-        if (file != null && !file.isEmpty()) {
-            String fileName = fileUploadService.storeFile(file);
-            ImageEntity imageEntity = new ImageEntity();
-            imageEntity.setImageUrl(fileName);
-            imageEntity.setPost(postEntity);
+        // 기존 이미지 URL 유지 처리
+        if (imageUrls != null && !imageUrls.isEmpty()) {
             postEntity.getImageList().clear();
-            postEntity.getImageList().add(imageEntity);
+            for (String imageUrl : imageUrls) {
+                ImageEntity imageEntity = new ImageEntity();
+                imageEntity.setImageUrl(imageUrl);
+                imageEntity.setPost(postEntity);
+                postEntity.getImageList().add(imageEntity);
+            }
         }
-        /* 게시글 수정 시 텍스트만 변경될 때, 현재 이미지 유지를 위한 조건 */
-        else if (imageUrl != null && !imageUrl.isEmpty()) {
-            ImageEntity imageEntity = new ImageEntity();
-            imageEntity.setImageUrl(imageUrl);
-            imageEntity.setPost(postEntity);
-            postEntity.getImageList().clear();
-            postEntity.getImageList().add(imageEntity);
+
+        // 파일 업로드 처리
+        if (files != null && !files.isEmpty()) {
+            for (MultipartFile file : files) {
+                if (!file.isEmpty()) {
+                    String fileName = fileUploadService.storeFile(file);
+                    String contentType = file.getContentType();
+
+                    if (contentType != null) {
+                        if (contentType.startsWith("image/")) {
+                            ImageEntity imageEntity = new ImageEntity();
+                            imageEntity.setImageUrl(fileName);
+                            imageEntity.setPost(postEntity);
+                            postEntity.getImageList().add(imageEntity);
+                        } else if (contentType.startsWith("video/")) {
+                            postEntity.getVideoList().clear();
+                            VideoEntity videoEntity = new VideoEntity();
+                            videoEntity.setVideoUrl(fileName);
+                            videoEntity.setPost(postEntity);
+                            postEntity.getVideoList().add(videoEntity);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 비디오 파일 유지 처리
+        if (videoUrl != null && !videoUrl.isEmpty()) {
+            postEntity.getVideoList().clear();
+            VideoEntity videoEntity = new VideoEntity();
+            videoEntity.setVideoUrl(videoUrl);
+            videoEntity.setPost(postEntity);
+            postEntity.getVideoList().add(videoEntity);
         }
 
         postRepository.save(postEntity);
 
         return PostDTO.toDTO(postEntity);
     }
-
 
     // 게시글 삭제
     public void deletePost(Long postId) {
@@ -160,11 +218,16 @@ public class PostService {
 
         // 인증된 사용자가 소유자일 경우, 게시글 삭제
         postRepository.deleteById(postId);
+
+        // 게시글과 관련된 해시태그 관계 삭제
+        postHashTagRepository.deleteByPostId(postId);
+
+        // 사용되지 않는 해시태그 삭제
+        hashTagRepository.deleteUnusedHashTags();
+
     }
 
-
     // 게시물 좋아요 추가 또는 삭제
-    @Transactional
     public void togglePostLike(Long postId) {
 
         PostEntity post = postRepository.findById(postId)
@@ -190,11 +253,12 @@ public class PostService {
 
         if (isLiked) {
             // 좋아요를 눌렀을 때만 알림 생성 및 전송
-            notificationService.sendNotification(post.getUser().getId(), "like", user.getId(), post.getId(), null);
+            notificationService.sendNotification(post.getUser().getId(), "like", user.getId(), post.getId(), null, null);
         }
     }
 
     // 게시물 좋아요 상태 조회
+    @Transactional(readOnly = true)
     public PostDTO getPostLikeStatus(Long postId) {
         PostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다."));

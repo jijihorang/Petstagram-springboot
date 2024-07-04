@@ -3,7 +3,9 @@ package com.petstagram.dto;
 import com.petstagram.entity.MessageEntity;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -12,27 +14,48 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class MessageDTO {
 
-    private Long id; // 메시지의 고유 식별자
-    private String messageContent; // 메시지 내용
-    private boolean isRead; // 메시지 읽음 상태
-    private boolean isDeleted; // 메시지 삭제 상태
-    private String messageType; // 메시지 유형
-    private String senderEmail; // 메세지를 보낸 사용자 이메일
-    private String senderName;  // 메세지를 보낸 사용자 이름
-    private String receiverEmail; // 메세지를 받은 사용자 이메일
-    private String receiverName; // 메세지를 받은 사용자 이름
-    private Long chatRoomId; // 채팅방 ID 추가
-    private LocalDateTime regTime;
-    private boolean sender = false; // 메세지를 작성한 사용자
+    private Long id;
+    private Long chatRoomId;
+    private String messageContent;
+    private Long senderId;
+    private String senderName;
+    private String senderEmail;
+    private Long receiverId;
+    private String receiverName;
+    private String receiverEmail;
+    private String regTime;
+    private List<ImageDTO> imageList;
+    private List<String> imageUrls;
+    private List<VideoDTO> videoList;
+    private List<String> videoUrls;
+    private String audioUrl;
 
     // Entity -> DTO
     public static MessageDTO toDTO(MessageEntity messageEntity) {
         return MessageDTO.builder()
                 .id(messageEntity.getId())
+                .chatRoomId(messageEntity.getChatRoom().getId())
                 .messageContent(messageEntity.getMessageContent())
+                .senderId(messageEntity.getSender().getId())
+                .senderName(messageEntity.getSender().getName())
                 .senderEmail(messageEntity.getSender().getEmail())
+                .receiverId(messageEntity.getReceiver().getId())
+                .receiverName(messageEntity.getReceiver().getName())
                 .receiverEmail(messageEntity.getReceiver().getEmail())
-                .regTime(messageEntity.getRegTime())
+                .regTime(messageEntity.getRegTime().format(DateTimeFormatter.ISO_DATE_TIME))
+                .imageList(messageEntity.getImageList().stream()
+                        .map(ImageDTO::toDTO)
+                        .collect(Collectors.toList()))
+                .imageUrls(messageEntity.getImageList().stream()
+                        .map(image -> image.getImageUrl())
+                        .collect(Collectors.toList()))
+                .videoList(messageEntity.getVideoList().stream()
+                        .map(VideoDTO::toDTO)
+                        .collect(Collectors.toList()))
+                .videoUrls(messageEntity.getVideoList().stream()
+                        .map(video -> video.getVideoUrl())
+                        .collect(Collectors.toList()))
+                .audioUrl(messageEntity.getAudioUrl()) // 음성 메시지 URL 설정
                 .build();
     }
 }

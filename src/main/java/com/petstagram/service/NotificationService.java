@@ -2,13 +2,8 @@ package com.petstagram.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.petstagram.dto.NotificationDTO;
-import com.petstagram.entity.CommentEntity;
-import com.petstagram.entity.NotificationEntity;
-import com.petstagram.entity.PostEntity;
-import com.petstagram.entity.UserEntity;
-import com.petstagram.repository.EmitterRepository;
-import com.petstagram.repository.NotificationRepository;
-import com.petstagram.repository.PostRepository;
+import com.petstagram.entity.*;
+import com.petstagram.repository.*;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,6 +24,8 @@ public class NotificationService {
 
     private final EmitterRepository emitterRepository;
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
+    private final ReplyCommentRepository replyCommentRepository;
     private final NotificationRepository notificationRepository;
 
     private final ObjectMapper objectMapper;
@@ -80,16 +77,19 @@ public class NotificationService {
         return emitter;
     }
 
-    public void sendNotification(Long userId, String eventType, Long fromUserId, Long postId, Long commentId) {
-        UserEntity user = UserEntity.builder().id(userId).build();
-        UserEntity fromUser = UserEntity.builder().id(fromUserId).build();
-
+    public void sendNotification(Long userId, String eventType, Long fromUserId, Long postId, Long commentId, Long replyId) {
         if ("like".equals(eventType)) {
             handleLikeNotification(userId, fromUserId, postId, eventType);
+        } else if ("comment-like".equals(eventType)) {
+            handleCommentLikeNotification(userId, fromUserId, postId, commentId, eventType);
+        } else if ("reply-like".equals(eventType)) {
+            handleReplyLikeNotification(userId, fromUserId, postId, commentId, replyId, eventType);
         } else if ("following".equals(eventType)) {
             handleFollowNotification(userId, fromUserId, eventType);
         } else if ("comment".equals(eventType)) {
             handleCommentNotification(userId, fromUserId, postId, commentId, eventType);
+        } else if ("reply".equals(eventType)) {
+            handleReplyNotification(userId, fromUserId, postId, commentId, replyId, eventType);
         }
     }
 
@@ -111,7 +111,51 @@ public class NotificationService {
 
         saveNotification(userId, fromUserId, postId, eventType);
 
-        sendSseEvent(userId, new NotificationDTO(null, fromUserId, postId, null, eventType, LocalDateTime.now()), eventType);
+        sendSseEvent(userId, new NotificationDTO(null, fromUserId, postId, null, null, eventType, LocalDateTime.now()), eventType);
+    }
+
+    private void handleCommentLikeNotification(Long userId, Long fromUserId, Long postId, Long commentId, String eventType) {
+        Optional<CommentEntity> commentOpt = commentRepository.findById(commentId);
+        if (commentOpt.isEmpty()) {
+            return;
+        }
+
+        CommentEntity comment = commentOpt.get();
+        Long commentAuthorId = comment.getAuthorId();
+        if (fromUserId.equals(commentAuthorId)) {
+            return;
+        }
+
+        Optional<NotificationEntity> existingNotification = notificationRepository.findByUserIdAndFromUserIdAndCommentIdAndEventType(userId, fromUserId, commentId, eventType);
+        if (existingNotification.isPresent()) {
+            return;
+        }
+
+        saveNotification(userId, fromUserId, postId, commentId, eventType);
+
+        sendSseEvent(userId, new NotificationDTO(null, fromUserId, postId, commentId, null, eventType, LocalDateTime.now()), eventType);
+    }
+
+    private void handleReplyLikeNotification(Long userId, Long fromUserId, Long postId, Long commentId, Long replyId, String eventType) {
+        Optional<ReplyCommentEntity> replyOpt = replyCommentRepository.findById(replyId);
+        if (replyOpt.isEmpty()) {
+            return;
+        }
+
+        ReplyCommentEntity reply = replyOpt.get();
+        Long replyAuthorId = reply.getUser().getId();
+        if (fromUserId.equals(replyAuthorId)) {
+            return;
+        }
+
+        Optional<NotificationEntity> existingNotification = notificationRepository.findByUserIdAndFromUserIdAndReplyIdAndEventType(userId, fromUserId, replyId, eventType);
+        if (existingNotification.isPresent()) {
+            return;
+        }
+
+        saveNotification(userId, fromUserId, postId, commentId, replyId, eventType);
+
+        sendSseEvent(userId, new NotificationDTO(null, fromUserId, postId, commentId, replyId, eventType, LocalDateTime.now()), eventType);
     }
 
     private void handleFollowNotification(Long userId, Long fromUserId, String eventType) {
@@ -122,7 +166,7 @@ public class NotificationService {
 
         saveNotification(userId, fromUserId, eventType);
 
-        sendSseEvent(userId, new NotificationDTO(null, fromUserId, null, null, eventType, LocalDateTime.now()), eventType);
+        sendSseEvent(userId, new NotificationDTO(null, fromUserId, null, null, null, eventType, LocalDateTime.now()), eventType);
     }
 
     private void handleCommentNotification(Long userId, Long fromUserId, Long postId, Long commentId, String eventType) {
@@ -137,8 +181,31 @@ public class NotificationService {
 
         saveNotification(userId, fromUserId, postId, commentId, eventType);
 
-        sendSseEvent(userId, new NotificationDTO(null, fromUserId, postId, commentId, eventType, LocalDateTime.now()), eventType);
+        sendSseEvent(userId, new NotificationDTO(null, fromUserId, postId, commentId, null, eventType, LocalDateTime.now()), eventType);
     }
+
+    private void handleReplyNotification(Long userId, Long fromUserId, Long postId, Long commentId, Long replyId, String eventType) {
+        Optional<CommentEntity> commentOpt = commentRepository.findById(commentId);
+        if (commentOpt.isEmpty()) {
+            return;
+        }
+
+        CommentEntity comment = commentOpt.get();
+        Long commentAuthorId = comment.getAuthorId();
+        if (fromUserId.equals(commentAuthorId)) {
+            return;
+        }
+
+        Optional<NotificationEntity> existingNotification = notificationRepository.findByUserIdAndFromUserIdAndReplyIdAndEventType(userId, fromUserId, replyId, eventType);
+        if (existingNotification.isPresent()) {
+            return;
+        }
+
+        saveNotification(userId, fromUserId, postId, commentId, replyId, eventType);
+
+        sendSseEvent(userId, new NotificationDTO(null, fromUserId, postId, commentId, replyId, eventType, LocalDateTime.now()), eventType);
+    }
+
 
     private void sendSseEvent(Long userId, NotificationDTO notificationData, String eventType) {
         var emitters = emitterRepository.getEmitters(userId);
@@ -160,7 +227,7 @@ public class NotificationService {
         }
     }
 
-    // 좋아요 알림 save
+    // 게시글 좋아요 알림 save
     public void saveNotification(Long userId, Long fromUserId, Long postId, String eventType) {
         NotificationEntity notification = NotificationEntity.builder()
                 .user(UserEntity.builder().id(userId).build())
@@ -193,6 +260,20 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
+    // 대댓글 좋아요 알림 save
+    public void saveNotification(Long userId, Long fromUserId, Long postId, Long commentId, Long replyId, String eventType) {
+        NotificationEntity notification = NotificationEntity.builder()
+                .user(UserEntity.builder().id(userId).build())
+                .fromUser(UserEntity.builder().id(fromUserId).build())
+                .post(PostEntity.builder().id(postId).build())
+                .comment(CommentEntity.builder().id(commentId).build())
+                .reply(ReplyCommentEntity.builder().id(replyId).build())
+                .eventType(eventType)
+                .build();
+        notificationRepository.save(notification);
+    }
+
+
     public List<NotificationDTO> findByUserId(Long userId) {
         List<NotificationEntity> notifications = notificationRepository.findByUserIdOrderByRegTimeDesc(userId);
         return notifications.stream()
@@ -206,6 +287,7 @@ public class NotificationService {
                 notification.getFromUser().getId(),
                 notification.getPost() != null ? notification.getPost().getId() : null,
                 notification.getComment() != null ? notification.getComment().getId() : null,
+                notification.getReply() != null ? notification.getReply().getId() : null,
                 notification.getEventType(),
                 notification.getRegTime()
         );

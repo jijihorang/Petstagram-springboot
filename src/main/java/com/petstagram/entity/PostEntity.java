@@ -22,13 +22,13 @@ public class PostEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "post_id")
-    private Long id; // 게시물 고유 식별자
+    private Long id;
 
-    private String postContent; // 게시물 내용(텍스트, 이미지, 비디오 링크 등).
+    private String postContent;
 
-    private String breed; // 강아지 종류 텐서플로우로 분류
+    private String breed;
 
-    private String location; // 위치
+    private String location;
 
     // 게시물과 사용자는 다대일 관계
     @ManyToOne(fetch = FetchType.LAZY)
@@ -40,6 +40,10 @@ public class PostEntity extends BaseEntity {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ImageEntity> imageList = new ArrayList<>();
 
+    // 게시물과 동영상은 일대다 관계
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<VideoEntity> videoList = new ArrayList<>();
+
     // 게시물과 댓글은 일대다 관계
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentEntity> commentList = new ArrayList<>();
@@ -49,14 +53,19 @@ public class PostEntity extends BaseEntity {
     @JsonIgnore
     private Set<PostLikeEntity> postLikeList = new HashSet<>();
 
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PostHashTagEntity> postHashTags = new HashSet<>();
+
     // DTO -> Entity
     public static PostEntity toEntity(PostDTO dto) {
         return PostEntity.builder()
                 .postContent(dto.getPostContent())
                 .breed(dto.getBreed())
-                .imageList(new ArrayList<>())
-                .commentList(new ArrayList<>())
                 .location(dto.getLocation())
+                .imageList(new ArrayList<>())
+                .videoList(new ArrayList<>())
+                .commentList(new ArrayList<>())
+                .postHashTags(new HashSet<>())
                 .build();
     }
 
@@ -70,6 +79,19 @@ public class PostEntity extends BaseEntity {
     public void addLike(PostLikeEntity postLikeEntity) {
         this.postLikeList.add(postLikeEntity);
         postLikeEntity.setPost(this);
+    }
+
+    // 동영상을 포스트에 추가하는 메서드
+    public void addVideo(VideoEntity videoEntity) {
+        this.videoList.add(videoEntity);
+        videoEntity.setPost(this);
+    }
+
+    public void addHashtag(HashTagEntity hashtagEntity) {
+        PostHashTagEntity postHashTagEntity = new PostHashTagEntity();
+        postHashTagEntity.setPost(this);
+        postHashTagEntity.setHashtag(hashtagEntity);
+        this.postHashTags.add(postHashTagEntity);
     }
 
     // 작성자 아이디를 가져오는 메서드

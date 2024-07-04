@@ -24,31 +24,29 @@ public class CommentEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "comment_id")
-    private Long id; // 댓글의 고유 식별자.
+    private Long id;
 
     @Column(nullable = false)
-    private String commentContent; // 댓글 내용.
+    private String commentContent;
 
     // 댓글과 사용자는 다대일 관계
-    @ManyToOne(fetch = FetchType.LAZY) // FetchType.LAZY 는 지연 로딩을 의미
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @JsonIgnore
-    private UserEntity user; // 댓글 작성자의 식별자.
+    private UserEntity user;
 
     // 댓글과 게시물은 다대일 관계
-    @ManyToOne(fetch = FetchType.LAZY) // FetchType.LAZY 는 지연 로딩을 의미
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
     @JsonIgnore
-    private PostEntity post; // 댓글이 속한 게시글.
+    private PostEntity post;
 
     // 댓글과 좋아요 수는 일대다 관계
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
     private Set<CommentLikeEntity> commentLikeList = new HashSet<>();
 
     // 대댓글과의 관계 설정
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
     private List<ReplyCommentEntity> replyCommentList = new ArrayList<>();
 
     // DTO -> Entity
@@ -69,5 +67,10 @@ public class CommentEntity extends BaseEntity {
     public void addReplyComment(ReplyCommentEntity replyCommentEntity) {
         this.replyCommentList.add(replyCommentEntity);
         replyCommentEntity.setComment(this);
+    }
+
+    // 댓글 작성자의 ID를 반환하는 메서드
+    public Long getAuthorId() {
+        return this.user != null ? this.user.getId() : null;
     }
 }

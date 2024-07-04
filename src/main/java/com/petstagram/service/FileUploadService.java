@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,6 +35,23 @@ public class FileUploadService {
 
             Path targetLocation = this.fileLocation.resolve(fileName);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+
+            return fileName;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String storeFile(File file) {
+        String fileName = UUID.randomUUID().toString() + "." + file.getName();
+
+        try {
+            if (fileName.contains("..")) {
+                throw new RuntimeException("Sorry! Filename contains invalid path sequence " + fileName);
+            }
+
+            Path targetLocation = this.fileLocation.resolve(fileName);
+            Files.copy(file.toPath(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
             return fileName;
         } catch (Exception e) {

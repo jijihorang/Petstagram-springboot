@@ -52,7 +52,7 @@ public class CommentService {
         // 댓글 알림 추가
         Long commentId = savedEntity.getId();
         Long postAuthorId = post.getUser().getId();
-        notificationService.sendNotification(postAuthorId, "comment", currentUser.getId(), postId, commentId);
+        notificationService.sendNotification(postAuthorId, "comment", currentUser.getId(), postId, commentId, null);
 
         return savedEntity.getId();
     }
@@ -141,11 +141,13 @@ public class CommentService {
         // 좋아요가 이미 있는지 확인
         Optional<CommentLikeEntity> commentLikeOpt = commentLikeRepository.findByCommentAndUser(comment, user);
 
+        boolean isLiked;
         if (commentLikeOpt.isPresent()) {
             // 좋아요 엔티티가 존재한다면, 상태를 false 로 설정하고 타임스탬프 업데이트
             CommentLikeEntity commentLikeEntity = commentLikeOpt.get();
             commentLikeEntity.setCommentStatus(!commentLikeEntity.isCommentStatus());
             commentLikeRepository.delete(commentLikeEntity);
+            isLiked = false;
         } else {
             // 좋아요가 없다면 추가
             CommentLikeEntity commentLikeEntity = new CommentLikeEntity();
@@ -153,6 +155,11 @@ public class CommentService {
             commentLikeEntity.setUser(user);
             commentLikeEntity.setCommentStatus(true);
             commentLikeRepository.save(commentLikeEntity);
+            isLiked = true;
+        }
+
+        if (isLiked) {
+            notificationService.sendNotification(comment.getAuthorId(), "comment-like", user.getId(), comment.getPost().getId(), commentId, null);
         }
     }
 
@@ -214,6 +221,11 @@ public class CommentService {
 
         ReplyCommentEntity savedEntity = replyCommentRepository.save(replyCommentEntity);
 
+        // 대댓글 알림 추가
+        Long replyId = savedEntity.getId();
+        Long commentAuthorId = comment.getAuthorId();
+        notificationService.sendNotification(commentAuthorId, "reply", currentUser.getId(), comment.getPost().getId(), commentId, replyId);
+
         return savedEntity.getId();
     }
 
@@ -257,16 +269,23 @@ public class CommentService {
 
         Optional<ReplyCommentLikeEntity> replyCommentLikeOpt = replyCommentLikeRepository.findByReplyCommentAndUser(replyComment, user);
 
+        boolean isLiked;
         if (replyCommentLikeOpt.isPresent()) {
             ReplyCommentLikeEntity replyCommentLikeEntity = replyCommentLikeOpt.get();
             replyCommentLikeEntity.setReplyCommentStatus(!replyCommentLikeEntity.isReplyCommentStatus());
             replyCommentLikeRepository.delete(replyCommentLikeEntity);
+            isLiked = false;
         } else {
             ReplyCommentLikeEntity replyCommentLikeEntity = new ReplyCommentLikeEntity();
             replyCommentLikeEntity.setReplyComment(replyComment);
             replyCommentLikeEntity.setUser(user);
             replyCommentLikeEntity.setReplyCommentStatus(true);
             replyCommentLikeRepository.save(replyCommentLikeEntity);
+            isLiked = true;
+        }
+
+        if (isLiked) {
+            notificationService.sendNotification(replyComment.getUser().getId(), "reply-like", user.getId(), replyComment.getComment().getPost().getId(), replyComment.getComment().getId(), replyCommentId);
         }
     }
 

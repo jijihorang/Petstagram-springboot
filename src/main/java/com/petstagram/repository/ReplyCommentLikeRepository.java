@@ -17,4 +17,5 @@ public interface ReplyCommentLikeRepository extends JpaRepository<ReplyCommentLi
     List<ReplyCommentLikeEntity> findByReplyComment(ReplyCommentEntity replyComment);
 
     void deleteByReplyComment(ReplyCommentEntity replyComment);
+
 }

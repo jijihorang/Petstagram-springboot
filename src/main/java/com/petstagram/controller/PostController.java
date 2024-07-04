@@ -1,5 +1,7 @@
 package com.petstagram.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.petstagram.dto.PostDTO;
 import com.petstagram.dto.UserDTO;
 import com.petstagram.service.PostService;
@@ -22,10 +24,18 @@ public class PostController {
 
     // 게시글 작성
     @PostMapping("/write")
-    public ResponseEntity<String> writePost(@RequestPart("post") PostDTO postDTO, @RequestPart("file") MultipartFile file, @RequestPart("breed") String breed) {
+    public ResponseEntity<String> writePost(@RequestPart("post") PostDTO postDTO,
+                                            @RequestPart("file") List<MultipartFile> files,
+                                            @RequestPart(value = "breed", required = false) String breed,
+                                            @RequestPart(value = "hashtags", required = false) String hashtagsJson) {
         try {
             postDTO.setBreed(breed);
-            postService.writePost(postDTO, file);
+            // 해시태그 JSON 문자열을 리스트로 변환
+            ObjectMapper objectMapper = new ObjectMapper();
+            List<String> hashtags = objectMapper.readValue(hashtagsJson, new TypeReference<List<String>>() {});
+            System.out.println("해시태그 리스트: " + hashtags);
+
+            postService.writePost(postDTO, files, hashtags);
             return ResponseEntity.ok("게시글이 작성되었습니다.");
         } catch (Exception e) {
             log.error("파일 업로드 중 오류 발생", e);
@@ -57,19 +67,19 @@ public class PostController {
     @PutMapping("/update/{postId}")
     public ResponseEntity<PostDTO> updatePost(@PathVariable Long postId,
                                               @RequestPart("post") PostDTO postDTO,
-                                              @RequestPart(value = "file", required = false) MultipartFile file,
+                                              @RequestPart(value = "file", required = false) List<MultipartFile> files,
                                               @RequestPart(value = "breed", required = false) String breed,
-                                              @RequestPart(value = "imageUrl", required = false) String imageUrl) {
+                                              @RequestPart(value = "imageUrl", required = false) List<String> imageUrls,
+                                              @RequestPart(value = "videoUrl", required = false) String videoUrl) {
         try {
             postDTO.setBreed(breed);
-            PostDTO updatedPost = postService.updatePost(postId, postDTO, file, imageUrl);
+            PostDTO updatedPost = postService.updatePost(postId, postDTO, files, imageUrls, videoUrl);
             return ResponseEntity.ok(updatedPost);
         } catch (Exception e) {
             log.error("게시글 수정 중 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
-
 
 
     // 게시글 삭제

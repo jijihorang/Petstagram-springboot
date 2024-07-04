@@ -18,24 +18,27 @@ import java.util.List;
 @AllArgsConstructor
 public class UserProfileDTO {
 
-    private Long id;    // 사용자의 고유 식별자
-    private String name;    // 사용자의 이름
-    private String email;   // 사용자의 이메일
-
-    private String gender; // 성별
-    private String bio; // 사용자 소개
-    private Boolean isRecommend; // 추천 여부, 기본값은 false
+    private Long id;
+    private String name;
+    private String email;
+    private String password;
+    private String gender;
+    private String bio;
+    private String phone;
+    private Boolean isRecommend;
     private ProfileImageDTO profileImage;
 
     private List<UserEntity> userEntityList;
 
-    public UserProfileDTO(Long id, String name, String email, ProfileImageDTO profileImage, String bio, Boolean isRecommend) {
+    public UserProfileDTO(Long id, String name, String email, ProfileImageDTO profileImage, String bio, Boolean isRecommend, String phone, String password) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.profileImage = profileImage;
         this.bio = bio;
         this.isRecommend = isRecommend;
+        this.phone = phone;
+        this.password = password;
     }
 
     // Entity -> DTO
@@ -43,9 +46,11 @@ public class UserProfileDTO {
         UserProfileDTO userProfileDTO = UserProfileDTO.builder()
                 .id(userEntity.getId())
                 .email(userEntity.getEmail())
+                .password(userEntity.getPassword())
                 .name(userEntity.getName())
                 .gender(userEntity.getGender())
                 .bio(userEntity.getBio())
+                .phone(userEntity.getPhone())
                 .isRecommend(userEntity.getIsRecommend())
                 .build();
 

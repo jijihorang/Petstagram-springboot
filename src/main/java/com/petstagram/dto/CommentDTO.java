@@ -13,17 +13,13 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CommentDTO {
-    private Long id; // 댓글의 고유 식별자.
-    private String commentContent; // 댓글 내용.
-    private String commentEmail; // 댓글을 작성한 사용자 이메일
-
+    private Long id;
+    private String commentContent;
+    private String commentEmail;
     private String commentRegTime;
-
-    private boolean commentLiked; // 댓글 좋아요 상태
-    private long commentLikesCount; // 댓글의 좋아요 수.
-
+    private boolean commentLiked;
+    private long commentLikesCount;
     private List<ReplyCommentDTO> replyCommentList;
-
     private Long postId;
 
     // Entity -> DTO
